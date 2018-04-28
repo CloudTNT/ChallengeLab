@@ -1,3 +1,33 @@
+#Function to Invoke-RestMethod
+function restCall ($Method, $URI, $Header, $body) {
+	$param = @{
+		Method 	= $Method;
+		Uri 	= $URI;
+		Headers	= $header;
+		Body	= $body;
+	}
+	Invoke-RestMethod @param
+}
+
+#log function for script
+Function LogWrite
+{
+   Param ([string]$logstring)
+
+   Add-content $Logfile -value $logstring
+}
+$Logfile = ""C:\code\automation-201-master\ChallengeLab\output.txt"
+
+
+#Import CSV file
+$devices = Import-Csv "C:\code\automation-201-master\ChallengeLab\data.csv"
+
+#URL that will be used for restCalls
+$report	= "http://192.168.99.100:3000/records"
+$db 	= "http://192.168.99.100:3000/db"
+
+
+
 $ImportedCSV = Import-Csv "C:\code\automation-201-master\ChallengeLab\datav1.csv"
 $NewCSV = Foreach ($Entry in $ImportedCsv) {
 
