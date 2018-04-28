@@ -16,8 +16,9 @@ Function LogWrite
 
    Add-content $Logfile -value $logstring
 }
-$Logfile = ""C:\code\automation-201-master\ChallengeLab\output.txt"
-
+$Logfile = "C:\code\automation-201-master\ChallengeLab\output.txt"
+# Get Start Time
+$startDTM = LogWrite (Get-Date)
 
 #Import CSV file
 $devices = Import-Csv "C:\code\automation-201-master\ChallengeLab\data.csv"
@@ -40,4 +41,12 @@ $NewCSV = Foreach ($Entry in $ImportedCsv) {
 }
 $NewCSV | Export-CSV "C:\code\automation-201-master\ChallengeLab\datav2.csv" -NoTypeInformation
 $ImportedNewCSV = Import-Csv "C:\code\automation-201-master\ChallengeLab\datav2.csv"
-$ImportedNewCSV.Hostname
+LogWrite $ImportedNewCSV.Hostname
+
+
+
+# Get End Time
+$endDTM = LogWrite (Get-Date)
+
+# Echo Time elapsed
+LogWrite "Elapsed Time: $(($endDTM-$startDTM).totalseconds) seconds"
