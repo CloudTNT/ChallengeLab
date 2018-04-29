@@ -27,8 +27,17 @@ $devices = Import-Csv "C:\code\automation-201-master\ChallengeLab\data.csv"
 $report	= "http://192.168.99.100:3000/records"
 $db 	= "http://192.168.99.100:3000/db"
 
+$restReport = restCall -Method get -URI $report
+$restDB     = restCall -Method get -URI $db
+
+#Pull out the missint devices and store them in a variable. 
+$MissingDevice = Compare-Object -ReferenceObject ($restDB) -DifferenceObject ($restReport) -PassThru
+$i = 0
+$MissingDevice | foreach {$i++}
+$i
 
 
+#Extending the name of each device to 16 characters long with "-" in between the name and ramdom characters. Then creates new csv file with new names.
 $ImportedCSV = Import-Csv "C:\code\automation-201-master\ChallengeLab\datav1.csv"
 $NewCSV = Foreach ($Entry in $ImportedCsv) {
 
