@@ -10,7 +10,7 @@ function restCall ($Method, $URI, $Header, $body) {
 }
 
 #log function for script
-Function LogWrite
+Function WriteLog
 {
    Param ([string]$logstring)
 
@@ -18,7 +18,7 @@ Function LogWrite
 }
 $Logfile = "C:\code\automation-201-master\ChallengeLab\output.txt"
 # Get Start Time
-$startDTM = LogWrite (Get-Date)
+$startDTM = WriteLog (Get-Date)
 
 #Import CSV file
 $devices = Import-Csv "C:\code\automation-201-master\ChallengeLab\data.csv"
@@ -30,32 +30,54 @@ $db 	= "http://192.168.99.100:3000/db"
 $restReport = restCall -Method get -URI $report
 $restDB     = restCall -Method get -URI $db
 
-#Pull out the missint devices and store them in a variable. 
-$MissingDevice = Compare-Object -ReferenceObject ($restDB) -DifferenceObject ($restReport) -PassThru
+#Pull out the missing devices and store them in a variable. 
+$MissingDevice = Compare-Object -ReferenceObject ($restReport) -DifferenceObject ($ImportedNewCSV) -PassThru
 $i = 0
 $MissingDevice | foreach {$i++}
 $i
 
-
 #Extending the name of each device to 16 characters long with "-" in between the name and ramdom characters. Then creates new csv file with new names.
-$ImportedCSV = Import-Csv "C:\code\automation-201-master\ChallengeLab\datav1.csv"
-$NewCSV = Foreach ($Entry in $ImportedCsv) {
+$NewDeviceList = Foreach ($Entry in $MissingDevice) {
 
     Switch ($Entry."Hostname") {
         $_ {$Entry."Hostname" = $_ += "-"+ ([char[]]([char]'a'..[char]'z') + 0..9 | sort {get-random})[0..15] -join '' -replace '\s',''}
         $_ {$Entry."Hostname" = $_.substring(0, [System.Math]::Min(16, $_.Length))}
-        default {Write-Error "$($Entry."Branch Number") has unexpected value for Available Person"}
+        default {Write-Error "Unexpected value for Hostname"}
     }
     $Entry
 }
-$NewCSV | Export-CSV "C:\code\automation-201-master\ChallengeLab\datav2.csv" -NoTypeInformation
+$NewDeviceList | Export-CSV "C:\code\automation-201-master\ChallengeLab\datav2.csv" -NoTypeInformation
 $ImportedNewCSV = Import-Csv "C:\code\automation-201-master\ChallengeLab\datav2.csv"
-LogWrite $ImportedNewCSV.Hostname
+
+#log the Hostname
+WriteLog $ImportedNewCSV.Hostname
+
+#Create json file with IPAddress and hostname form ImportedNewCSV
+$ImportedNewCSV | select "IP Address",Hostname | ConvertTo-Json | Out-File "C:\code\automation-201-master\ChallengeLab\MissingDevices.json"
+
+#Log count devices broken by vendor
+$Vendors = @("Juniper", "Cisco","F5")
+$Vendors | ForEach-Object{
+$outPut = $devices.Vendor | Where-Object {$_ -match $Vendors[$_]}
+$i = 0
+$outPut | foreach {$i++}
+WriteLog "$i + $_"
+}
+
+$outPut
+
+
+
+
+
+
+
 
 
 
 # Get End Time
-$endDTM = LogWrite (Get-Date)
+$endDTM = WriteLog (Get-Date)
 
 # Echo Time elapsed
-LogWrite "Elapsed Time: $(($endDTM-$startDTM).totalseconds) seconds"
+WriteLog "Elapsed Time: $(($endDTM-$startDTM).totalseconds) seconds"
+
