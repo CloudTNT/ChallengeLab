@@ -71,6 +71,12 @@ WriteLog $outPut1
 }
 
 #Hostname contains 3 or 5 characters
+ForEach($i in $devices.hostname){
+    $name = $i | where { $_.length -eq 5 -or $_.length -eq 3}
+    Write-Host $name
+    WriteLog $name
+}
+
 $count = $devices.Hostname | Where-Object ($_ -eq '/' ) | Measure-Object).count
 Write-Host $count
 
