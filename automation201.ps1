@@ -56,15 +56,25 @@ WriteLog $ImportedNewCSV.Hostname
 $ImportedNewCSV | select "IP Address",Hostname | ConvertTo-Json | Out-File "C:\code\automation-201-master\ChallengeLab\MissingDevices.json"
 
 #Log count devices broken by vendor
-$Vendors = @("Juniper", "Cisco","F5")
-$Vendors | ForEach-Object{
-$outPut = $devices.Vendor | Where-Object {$_ -match $Vendors[$_]}
-$i = 0
-$outPut | foreach {$i++}
-WriteLog "$i + $_"
+$Vendors = @{}
+$devices.Vendor | foreach {$Vendors["$_"] += 1}
+$Vendors.keys | where {$Vendors["$_"] -gt 1} 
+$Vendors 
+
+#MAC address that contains E1
+$VendorMax = @("Juniper", "Cisco","F5","Netscout")
+ForEach($i in $VendorMax){
+$outPut = $devices | Where-Object "Vendor" -eq "$i"
+$outPut1 = $outPut| Where-Object "Mac Address" -Like "*E1*"
+$outPut1
+WriteLog $outPut1
 }
 
-$outPut
+#Hostname contains 3 or 5 characters
+$count = $devices.Hostname | Where-Object ($_ -eq '/' ) | Measure-Object).count
+Write-Host $count
+
+
 
 
 
