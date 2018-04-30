@@ -19,7 +19,7 @@ Function WriteLog
 $Logfile = "C:\code\automation-201-master\ChallengeLab\output.txt"
 
 # Logging Start Time
-$startDTM = WriteLog (Get-Date)
+WriteLog ($startDTM = (Get-Date))
 
 #Import CSV file
 $devices = Import-Csv "C:\code\automation-201-master\ChallengeLab\data.csv"
@@ -34,15 +34,31 @@ $restDB     = restCall -Method get -URI $db
 $header = @{ "Accept" = "application/json"; "Content-Type" = "application/json"  }
 
 #Pull out the missing devices and store them in a variable. ***confirm difference 
-$MissingDevice = Compare-Object -ReferenceObject ($restReport) -DifferenceObject ($ImportedNewCSV) -PassThru
+$MissingDevices = Compare-Object -ReferenceObject ($restReport.serial) -DifferenceObject ($devices.serial) -PassThru
+#Determin how many devices are missing
 $i = 0
-$MissingDevice | foreach {$i++}
+$MissingDevices | foreach {$i++}
 $i
-Writelog "$i + "missing entries" "
+Writelog ("$i + missing entries")
+
+#Storing list of missing devices with all data
+$MissingDeviceTable = @{}
+$MissingDevices | foreach {
+        $MissingDeviceTable["$_"] += 1
+}
+#exporting data into CSV readable format to compare files and pull accurate data.
+$MissingDeviceTable.GetEnumerator() | select Name | Export-Csv C:\code\automation-201-master\ChallengeLab\MissingSeriallist.csv -NoTypeInformation
+$MissingDeviceSerial = Import-Csv C:\code\automation-201-master\ChallengeLab\MissingSeriallist.csv
+
+$addMissingDevices = @()
+foreach($i in $MissingDeviceSerial.Name) {
+    $MissingDevices = $devices| Where-Object "Serial" -Match "$i"
+    $addMissingDevices += $MissingDevices
+}
 
 #Extending the name of each device to 16 characters long with "-" in between the name and ramdom characters.
 #Then creates new csv file with new names.
-$newMissingDevice = Foreach ($Entry in $MissingDevice) {
+$newDeviceList = Foreach ($Entry in $devices) {
 
     Switch ($Entry."Hostname") {
         $_ {$Entry."Hostname" = $_ += "-"+ ([char[]]([char]'a'..[char]'z') + 0..9 | sort {get-random})[0..15] -join '' -replace '\s',''}
@@ -51,14 +67,14 @@ $newMissingDevice = Foreach ($Entry in $MissingDevice) {
     }
     $Entry
 }
-$newMissingDevice | Export-CSV "C:\code\automation-201-master\ChallengeLab\datav2.csv" -NoTypeInformation
-$ImportNewMissingDeviceCSV = Import-Csv "C:\code\automation-201-master\ChallengeLab\datav2.csv"
+$newDeviceList | Export-CSV "C:\code\automation-201-master\ChallengeLab\datav2.csv" -NoTypeInformation
+$newDeviceList = Import-Csv "C:\code\automation-201-master\ChallengeLab\datav2.csv"
 
 #log the Hostname
-WriteLog $ImportNewMissingDeviceCSV.Hostname
+WriteLog $newDeviceList.Hostname
 
 #Create json file with IPAddress and hostname form ImportedNewCSV
-$ImportedNewCSV | select "IP Address",Hostname | ConvertTo-Json | Out-File "C:\code\automation-201-master\ChallengeLab\MissingDevices.json"
+$newDeviceList | select "IP Address",Hostname | ConvertTo-Json | Out-File "C:\code\automation-201-master\ChallengeLab\MissingDevices.json"
 
 #Log count devices broken by vendor.***Figure out how to log HashTable here.
 $Vendors = @{}
@@ -86,8 +102,8 @@ ForEach($i in $devices.hostname){
     WriteLog $name
 }
 
-#Add missing IP Address
-$MissingDevice | forEach-object {
+#Add missing info to Rest Server
+$addMissingDevices | forEach-object {
 $body = @"
 {
  "serial"    : "$($_.Serial)",
@@ -98,7 +114,7 @@ restCall -Uri $report -Method Post -Header $header -Body $body
 }
 
 # Get End Time
-$endDTM = WriteLog (Get-Date)
+writelog ($endDTM = (Get-Date))
 
 # Echo Time elapsed
 WriteLog "Elapsed Time: $(($endDTM-$startDTM).totalseconds) seconds"
