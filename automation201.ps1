@@ -34,6 +34,7 @@ $restDB     = restCall -Method get -URI $db
 $MissingDevice = Compare-Object -ReferenceObject ($restReport) -DifferenceObject ($ImportedNewCSV) -PassThru
 $i = 0
 $MissingDevice | foreach {$i++}
+$i
 Writelog "$i + "missing entries" "
 
 #Extending the name of each device to 16 characters long with "-" in between the name and ramdom characters. Then creates new csv file with new names.
@@ -89,19 +90,6 @@ $body = @"
 "@
 restCall -Uri $report -Method Post -Header $header -Body $body
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 # Get End Time
 $endDTM = WriteLog (Get-Date)
