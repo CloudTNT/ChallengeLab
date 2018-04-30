@@ -26,7 +26,7 @@ $Headers = @{“Authorization”=”121e4abd6a6887bc396401c273691fd87a46e269"}
 $url = 'https://raw.githubusercontent.com/CloudTNT/ChallengeLab/master/data.csv'
 Invoke-WebRequest $url -Headers $Headers -OutFile C:\Users\tejadaj\Downloads\data.csv 
 $devices = Import-Csv "C:\Users\tejadaj\Downloads\data.csv" #"C:\code\automation-201-master\ChallengeLab\data.csv"
-$devices
+
 
 #URL that will be used for restCalls and Header
 $report	= "http://192.168.99.100:3000/records"
