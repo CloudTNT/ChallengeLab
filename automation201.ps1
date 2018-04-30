@@ -34,7 +34,7 @@ $restDB     = restCall -Method get -URI $db
 $MissingDevice = Compare-Object -ReferenceObject ($restReport) -DifferenceObject ($ImportedNewCSV) -PassThru
 $i = 0
 $MissingDevice | foreach {$i++}
-$i
+Writelog "$i + "missing entries" "
 
 #Extending the name of each device to 16 characters long with "-" in between the name and ramdom characters. Then creates new csv file with new names.
 $NewDeviceList = Foreach ($Entry in $MissingDevice) {
@@ -77,8 +77,20 @@ ForEach($i in $devices.hostname){
     WriteLog $name
 }
 
-$count = $devices.Hostname | Where-Object ($_ -eq '/' ) | Measure-Object).count
-Write-Host $count
+#Add missing IP Address
+$header = @{ "Accept" = "application/json"; "Content-Type" = "application/json"  }
+$MissingDevice | forEach-object {
+
+$body = @"
+{
+ "serial"    : "$($_.Serial)",
+ "ipAddress" : "$($_."IP Address")"
+ }
+"@
+restCall -Uri $report -Method Post -Header $header -Body $body
+}
+
+
 
 
 
